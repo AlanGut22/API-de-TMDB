@@ -59,6 +59,7 @@ async function iniciarBusqueda() {
 
         // limpiar contenedores
         contenedorResultados.innerHTML = "";
+        contenedorResultados.classList.remove("traducciones-grid");
         contenedorDetalles.innerHTML = "";
         contenedorDetalles.style.display = "none";
 
@@ -80,6 +81,10 @@ async function iniciarBusqueda() {
 
         if (filtro === "imagenes") {
             obtenerImagenes(id);
+        }
+
+        if (filtro === "traducciones") {
+            obtenerTraducciones(id);
         }
 
     } catch (error) {
@@ -142,21 +147,31 @@ async function obtenerInformacion(id) {
         : "https://via.placeholder.com/300x450?text=No+Image";
 
     contenedorDetalles.innerHTML = `
-    
-    <div class="detalles-info">
-
-        <h2>${data.name}</h2>
-
-        <img src="${poster}">
-
-        <p><strong>Primera emisión:</strong> ${data.first_air_date}</p>
-
-        <p><strong>Calificación:</strong> ${data.vote_average}</p>
-
-        <p>${data.overview}</p>
-
-    </div>
-
+        <div class="detalles-info">
+            <div class="detalles-media">
+                <img src="${poster}" alt="${data.name}">
+            </div>
+            <div class="detalles-contenido">
+                <h2>${data.name}</h2>
+                <div class="detalles-meta">
+                    <span class="chip">
+                        Primera emisión
+                        <strong>${data.first_air_date}</strong>
+                    </span>
+                    <span class="chip chip--accent">
+                        Calificación
+                        <strong>${data.vote_average}</strong>
+                    </span>
+                    <span class="chip">
+                        Temp. / Episodios
+                        <strong>${data.number_of_seasons} temporadas · ${data.number_of_episodes} episodios</strong>
+                    </span>
+                </div>
+                <p class="detalles-resumen">
+                    ${data.overview}
+                </p>
+            </div>
+        </div>
     `;
 
     // 🔹 MOSTRAR EL CONTENEDOR
@@ -336,10 +351,88 @@ async function obtenerImagenes(id) {
         const img = document.createElement("img");
 
         img.src = `${IMAGE_URL}${imagen.file_path}`;
-        img.style.width = "300px";
-        img.style.margin = "10px";
+		img.classList.add("grid-backdrop");
 
         contenedorResultados.appendChild(img);
+
+    });
+
+}
+
+// ===============================
+// TRADUCCIONES
+// ===============================
+
+async function obtenerTraducciones(id) {
+
+    const url = `${BASE_URL}/tv/${id}/translations?api_key=${API_KEY}`;
+
+    const respuesta = await fetch(url);
+    const data = await respuesta.json();
+
+    mostrarMensaje("");
+
+    contenedorResultados.innerHTML = "";
+    contenedorResultados.classList.add("traducciones-grid");
+
+    const titulo = document.createElement("h2");
+    titulo.textContent = "Traducciones disponibles";
+    titulo.style.gridColumn = "1 / -1";
+
+    contenedorResultados.appendChild(titulo);
+
+    const traduccionesFiltradas = data.translations?.filter(t => {
+
+        if (!t.data || (!t.data.overview && !t.data.name)) return false;
+
+        const lang = t.iso_639_1;
+        const country = t.iso_3166_1;
+
+        // español México, español España, inglés, francés, alemán, portugués
+        const esMX = lang === "es" && country === "MX";
+        const esES = lang === "es" && country === "ES";
+        const en = lang === "en";
+        const fr = lang === "fr";
+        const de = lang === "de";
+        const pt = lang === "pt";
+
+        return esMX || esES || en || fr || de || pt;
+
+    }) || [];
+
+    traduccionesFiltradas.forEach(traduccion => {
+
+        const tarjeta = document.createElement("div");
+        tarjeta.classList.add("card");
+
+        let etiquetaIdioma = traduccion.english_name;
+
+        if (traduccion.iso_639_1 === "es" && traduccion.iso_3166_1 === "MX") {
+            etiquetaIdioma = "Español (México)";
+        } else if (traduccion.iso_639_1 === "es" && traduccion.iso_3166_1 === "ES") {
+            etiquetaIdioma = "Español (España)";
+        } else if (traduccion.iso_639_1 === "en") {
+            etiquetaIdioma = "Inglés";
+        } else if (traduccion.iso_639_1 === "fr") {
+            etiquetaIdioma = "Francés";
+        } else if (traduccion.iso_639_1 === "de") {
+            etiquetaIdioma = "Alemán";
+        } else if (traduccion.iso_639_1 === "pt") {
+            etiquetaIdioma = "Portugués";
+        }
+
+        const tituloTraducido = traduccion.data.name || traduccion.data.title || "Sin título";
+        const resumen = traduccion.data.overview || "Sin sinopsis en esta traducción.";
+
+        tarjeta.innerHTML = `
+            <div class="card-body">
+                <h3>${etiquetaIdioma}</h3>
+                <p><strong>${tituloTraducido}</strong></p>
+                <p>${resumen}</p>
+            </div>
+        `;
+
+        contenedorResultados.appendChild(tarjeta);
 
     });
 
