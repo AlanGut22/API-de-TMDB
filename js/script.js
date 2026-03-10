@@ -1,3 +1,7 @@
+// Configuración de la API
+const BASE_URL = "https://api.themoviedb.org/3";
+const IMAGE_URL = "https://image.tmdb.org/t/p/w500";
+
 // ===============================
 // CONSTANTE DE LA SERIE ASIGNADA
 // ===============================
@@ -53,7 +57,7 @@ async function iniciarBusqueda() {
         const id = await obtenerID(nombre);
 
         if (!id) {
-            mostrarMensaje("Solo se permite consultar la serie 'The World at War'");
+            mostrarMensaje("Solo se permite consultar la serie 'The World at War' (El mundo en guerra)");
             return;
         }
 
@@ -135,7 +139,7 @@ async function obtenerID(nombre) {
 
 async function obtenerInformacion(id) {
 
-    const url = `${BASE_URL}/tv/${id}?api_key=${API_KEY}`;
+    const url = `${BASE_URL}/tv/${id}?api_key=${API_KEY}&language=es-ES`;
 
     const respuesta = await fetch(url);
     const data = await respuesta.json();
@@ -185,7 +189,7 @@ async function obtenerInformacion(id) {
 
 async function obtenerActores(id) {
 
-    const url = `${BASE_URL}/tv/${id}/aggregate_credits?api_key=${API_KEY}`;
+    const url = `${BASE_URL}/tv/${id}/aggregate_credits?api_key=${API_KEY}&language=es-ES`;
 
     const respuesta = await fetch(url);
     const data = await respuesta.json();
@@ -263,7 +267,7 @@ async function obtenerActores(id) {
 
 async function obtenerRecomendaciones(id) {
 
-    const url = `${BASE_URL}/tv/${id}/recommendations?api_key=${API_KEY}`;
+    const url = `${BASE_URL}/tv/${id}/recommendations?api_key=${API_KEY}&language=es-ES`;
 
     const respuesta = await fetch(url);
     const data = await respuesta.json();
@@ -365,7 +369,7 @@ async function obtenerImagenes(id) {
 
 async function obtenerTraducciones(id) {
 
-    const url = `${BASE_URL}/tv/${id}/translations?api_key=${API_KEY}`;
+    const url = `${BASE_URL}/tv/${id}/translations?api_key=${API_KEY}&language=es-ES`;
 
     const respuesta = await fetch(url);
     const data = await respuesta.json();
