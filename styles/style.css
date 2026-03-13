@@ -19,24 +19,21 @@ body {
 main {
 	flex: 1;
 	width: 100%;
-	max-width: 1200px;
 	margin: 0 auto;
 	padding: 24px 16px 40px;
 }
 
 header {
 	background-color: #111827;
-	color: #f9fafb;
 	text-align: center;
 	padding: 40px 20px 70px;
 	box-shadow: 0 6px 20px rgba(15, 23, 42, 0.6);
-	border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+	border-bottom: 1px solid #94a3b833;
 }
 
 header h1 {
 	font-size: 34px;
 	letter-spacing: 0.08em;
-	text-transform: uppercase;
 }
 
 header p {
@@ -54,20 +51,20 @@ header p {
 	gap: 12px;
 	flex-wrap: wrap;
 	padding: 20px 24px;
-	background: rgba(15, 23, 42, 0.9);
+	background: #0f172ae6;
 	border-radius: 16px;
 	box-shadow: 0 10px 30px rgba(15, 23, 42, 0.6);
 	max-width: 960px;
 	margin: -52px auto 28px;
-	border: 1px solid rgba(148, 163, 184, 0.45);
+	border: 1px solid #94a3b873;
 }
 
 .busqueda input {
-	width: min(320px, 100%);
+	width: 320px;
 	padding: 11px 13px;
 	border-radius: 10px;
-	border: 1px solid rgba(148, 163, 184, 0.5);
-	background: rgba(15, 23, 42, 0.8);
+	border: 1px solid #94a3b880;
+	background: #0f172acc;
 	color: #e5e7eb;
 	font-size: 14px;
 	outline: none;
@@ -75,17 +72,14 @@ header p {
 }
 
 .busqueda select {
-	min-width: 190px;
 	padding: 11px 36px 11px 13px;
 	border-radius: 10px;
-	border: 1px solid rgba(148, 163, 184, 0.5);
-	background-color: rgba(15, 23, 42, 0.95);
+	border: 1px solid #94a3b880;
+	background-color: #0f172af2;
 	color: #e5e7eb;
 	font-size: 14px;
 	outline: none;
 	cursor: pointer;
-	transition: border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
-	/* dejamos la flecha nativa del sistema */
 }
 
 .busqueda select option {
@@ -102,8 +96,8 @@ header p {
 .busqueda input:focus,
 .busqueda select:focus {
 	border-color: #3b82f6;
-	box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.35);
-	background: rgba(15, 23, 42, 0.95);
+	box-shadow: 0 0 0 1px #3b82f659;
+	background: #0f172af2;
 }
 
 .busqueda button {
@@ -113,21 +107,10 @@ header p {
 	border: none;
 	border-radius: 999px;
 	cursor: pointer;
-	transition: transform 0.15s ease, box-shadow 0.15s ease, background-position 0.15s ease;
 	font-weight: 600;
 	letter-spacing: 0.04em;
-	box-shadow: 0 6px 18px rgba(15, 23, 42, 0.8);
+	box-shadow: 0 6px 18px #0f172acc;
 	background-size: 100% 100%;
-}
-
-.busqueda button:hover {
-	transform: translateY(-1px);
-	box-shadow: 0 10px 24px rgba(15, 23, 42, 0.85);
-}
-
-.busqueda button:active {
-	transform: translateY(0);
-	box-shadow: 0 6px 18px rgba(37, 99, 235, 0.6);
 }
 
 /* MENSAJES */
@@ -137,18 +120,17 @@ header p {
 	margin: 18px auto 10px;
 	font-weight: bold;
 	color: #e5e7eb;
-	max-width: 960px;
 }
 
 /* GRID RESULTADOS */
 
 .grid-resultados {
 	display: grid;
-	grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+	grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
 	gap: 25px;
 	padding: 30px 0 10px;
-	max-width: 1200px;
 	margin: 0 auto 24px;
+	max-width: 1200px;
 }
 
 /* Grid específico para traducciones: 2 por fila en escritorio */
@@ -157,22 +139,14 @@ header p {
 	grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
-@media (max-width:768px) {
-	.grid-resultados.traducciones-grid {
-		grid-template-columns: minmax(0, 1fr);
-	}
-}
-
 /* Imágenes sueltas (vista IMÁGENES) */
 
-.grid-resultados > img,
+.grid-resultados>img,
 .grid-backdrop {
 	width: 100%;
-	max-width: 420px;
-	justify-self: center;
 	border-radius: 12px;
-	box-shadow: 0 10px 28px rgba(15, 23, 42, 0.7);
-	border: 1px solid rgba(30, 64, 175, 0.45);
+	box-shadow: 0 10px 28px #0f172ab3;
+	border: 1px solid #1e40af73;
 	object-fit: cover;
 	display: block;
 }
@@ -183,15 +157,8 @@ header p {
 	background-color: #020617;
 	border-radius: 10px;
 	overflow: hidden;
-	box-shadow: 0 14px 32px rgba(15, 23, 42, 0.75);
-	border: 1px solid rgba(30, 64, 175, 0.45);
-	transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-}
-
-.card:hover {
-	transform: translateY(-4px);
-	box-shadow: 0 18px 38px rgba(15, 23, 42, 0.9);
-	border-color: rgba(59, 130, 246, 0.65);
+	box-shadow: 0 14px 32px #0f172abf;
+	border: 1px solid #1e40af73;
 }
 
 .card img {
@@ -233,9 +200,9 @@ header p {
 	margin: 10px auto 40px;
 	padding: 22px 26px 24px;
 	border-radius: 18px;
-	box-shadow: 0 14px 34px rgba(15, 23, 42, 0.8);
-	max-width: 860px;
-	border: 1px solid rgba(30, 64, 175, 0.45);
+	box-shadow: 0 14px 34px #0f172acc;
+	max-width: 1200px;
+	border: 1px solid #1e40af73;
 }
 
 .detalles-info {
@@ -249,7 +216,7 @@ header p {
 	width: 100%;
 	max-width: 260px;
 	border-radius: 14px;
-	box-shadow: 0 12px 26px rgba(15, 23, 42, 0.75);
+	box-shadow: 0 12px 26px #0f172abf;
 	justify-self: center;
 }
 
@@ -272,8 +239,8 @@ header p {
 	justify-content: center;
 	padding: 6px 10px;
 	border-radius: 999px;
-	background: rgba(15, 23, 42, 0.9);
-	border: 1px solid rgba(51, 65, 85, 0.7);
+	background: #0f172ae6;
+	border: 1px solid #334155b3;
 	font-size: 11px;
 	text-transform: uppercase;
 	letter-spacing: 0.08em;
@@ -287,8 +254,8 @@ header p {
 }
 
 .chip--accent {
-	border-color: rgba(251, 191, 36, 0.7);
-	background-color: rgba(24, 20, 9, 0.9);
+	border-color: #fbbf24b3;
+	background-color: #181409e6;
 }
 
 .detalles-resumen {
@@ -324,29 +291,6 @@ header p {
 
 /* RESPONSIVE */
 
-@media (max-width:1279px) {
-
-	main {
-		max-width: 1000px;
-	}
-
-	.detalles {
-		max-width: 860px;
-	}
-}
-
-@media (max-width:921px) {
-
-	.detalles-info {
-		grid-template-columns: minmax(0, 1fr);
-		align-items: flex-start;
-	}
-
-	.detalles-media img {
-		max-width: 230px;
-	}
-}
-
 @media (max-width:768px) {
 
 	.busqueda {
@@ -361,7 +305,6 @@ header p {
 	.busqueda select,
 	.busqueda button {
 		width: 100%;
-		max-width: 100%;
 	}
 
 	/* Evitar que el select fuerce más ancho del contenedor */
@@ -384,10 +327,6 @@ header p {
 		justify-self: center;
 	}
 
-	.detalles-media img {
-		max-width: 210px;
-	}
-
 	header h1 {
 		font-size: 26px;
 	}
@@ -398,6 +337,10 @@ header p {
 
 	.grid-resultados {
 		gap: 20px;
+	}
+
+	.grid-resultados.traducciones-grid {
+		grid-template-columns: minmax(0, 1fr);
 	}
 }
 
@@ -412,16 +355,7 @@ header p {
 	}
 
 	.busqueda {
-		margin-top: -36px;
-		border-radius: 14px;
-		padding-inline: 14px;
-	}
-
-	.busqueda input,
-	.busqueda select {
-		width: 100%;
-		max-width: 100%;
-		font-size: 13px;
+		margin-top: -60px;
 	}
 
 	.busqueda select {
@@ -435,11 +369,7 @@ header p {
 
 	.card img,
 	.no-image {
-		height: 260px;
-	}
-
-	.detalles-media img {
-		width: 180px;
+		height: 400px;
 	}
 }
 
@@ -470,8 +400,4 @@ footer a:hover {
 .grid-resultados h2 {
 	text-align: center;
 	margin: 20px 0;
-}
-
-#detalles:empty {
-	display: none;
 }

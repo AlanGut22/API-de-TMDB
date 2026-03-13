@@ -21,6 +21,7 @@ const ID_SERIE_PERMITIDA = 751;
 // Nombre de la serie permitida
 // También se valida para asegurar que el usuario busque la serie correcta
 const NOMBRE_SERIE_PERMITIDA = "The World at War";
+const NOMBRE_SERIE_ES = "El Mundo en Guerra";
 
 
 // =====================================================
@@ -178,9 +179,12 @@ async function obtenerID(nombre) {
 
     // Validación de seguridad:
     // solo se permite la serie asignada
+    const nombreBusqueda = nombre.toLowerCase();
+
     if (
         serie.id !== ID_SERIE_PERMITIDA &&
-        serie.name.toLowerCase() !== NOMBRE_SERIE_PERMITIDA.toLowerCase()
+        nombreBusqueda !== NOMBRE_SERIE_PERMITIDA.toLowerCase() &&
+        nombreBusqueda !== NOMBRE_SERIE_ES.toLowerCase()
     ) {
         return null;
     }
@@ -385,7 +389,7 @@ async function obtenerVideos(id) {
             const iframe = document.createElement("iframe");
 
             iframe.width = "100%";
-            iframe.height = "250";
+            iframe.height = "300";
             iframe.src = `https://www.youtube.com/embed/${video.key}`;
             iframe.allowFullscreen = true;
 
