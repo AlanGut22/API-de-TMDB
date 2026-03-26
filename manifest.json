@@ -3,20 +3,20 @@
 	"short_name": "Consultor Series",
 	"description": "Consulta información de la serie The World at War usando la API de TMDB",
 	"start_url": "./index.html",
-	"scope": "/API-de-TMDB",
+	"scope": "/API-de-TMDB/",
 	"display": "standalone",
 	"background_color": "#020617",
 	"theme_color": "#111827",
 	"orientation": "any",
 	"icons": [
 		{
-			"src": "./assets/images/icon-192.png",
+			"src": "/API-de-TMDB/assets/images/icon-192.png",
 			"sizes": "192x192",
 			"type": "image/png",
 			"purpose": "any maskable"
 		},
 		{
-			"src": "./assets/images/icon-512.png",
+			"src": "/API-de-TMDB/assets/images/icon-512.png",
 			"sizes": "512x512",
 			"type": "image/png",
 			"purpose": "any maskable"
