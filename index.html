@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consultor de Series</title>
+    <link rel="stylesheet" href="styles/style.css">
+    <link rel="manifest" href="./manifest.json">
+    <meta name="theme-color" content="#111827">
+    <link rel="apple-touch-icon" href="./assets/images/icon-192.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+</head>
+<body>
+
+    <!-- =====================================================
+    PANTALLA DE BIENVENIDA / ONBOARDING
+    ====================================================== -->
+    <div id="onboarding" class="onboarding">
+        <div class="onboarding-card">
+            <div class="onboarding-logo">▶</div>
+            <h1 class="onboarding-title">CONSULTOR DE SERIES</h1>
+            <p class="onboarding-sub">Ingresa tu API Key de TMDB para comenzar</p>
+
+            <div class="onboarding-campos">
+                <input type="text" id="apiKeyInput" class="onboarding-input" placeholder="Pega aquí tu API Key..."
+                    autocomplete="off" spellcheck="false" />
+                <button id="btnValidar" class="onboarding-btn">Ingresar</button>
+            </div>
+
+            <div id="estadoClave" class="api-status" aria-live="polite"></div>
+
+            <p class="onboarding-hint">
+                Obtén tu clave gratuita en
+                <a href="https://www.themoviedb.org/settings/api" target="_blank">themoviedb.org</a>
+            </p>
+        </div>
+    </div>
+
+    <!-- =====================================================
+    APP PRINCIPAL (oculta hasta validar)
+    ====================================================== -->
+    <div id="app" class="app app--hidden">
+
+        <header>
+            <h1>CONSULTOR DE SERIES</h1>
+            <p>Aplicación web que consulta información desde una API</p>
+        </header>
+
+        <main>
+
+            <nav class="navbar" id="navbar">
+                <button class="hamburger" id="hamburger" aria-label="Abrir menú">
+                    <span class="hamburger-label">Secciones</span>
+                    <span class="hamburger-icon">
+                        <span></span><span></span><span></span>
+                    </span>
+                </button>
+                <ul class="nav-links" id="navLinks">
+                    <li><button class="nav-btn active" data-filtro="info">Información general</button></li>
+                    <li><button class="nav-btn" data-filtro="actores">Actores y equipo</button></li>
+                    <li><button class="nav-btn" data-filtro="temporadas">Temporadas</button></li>
+                    <li><button class="nav-btn" data-filtro="videos">Videos</button></li>
+                    <li><button class="nav-btn" data-filtro="imagenes">Imágenes</button></li>
+                    <li><button class="nav-btn" data-filtro="traducciones">Traducciones</button></li>
+                </ul>
+            </nav>
+
+            <section id="mensajes"></section>
+            <section id="resultados" class="grid-resultados"></section>
+            <section id="detalles" class="detalles"></section>
+
+        </main>
+
+        <footer>
+            <p>
+                Datos proporcionados por la API de
+                <a href="https://www.themoviedb.org/" target="_blank">The Movie Database (TMDB)</a>
+            </p>
+        </footer>
+
+    </div>
+
+    <script src="js/script.js"></script>
+    <script>
+        if ("serviceWorker" in navigator) {
+            window.addEventListener("load", () => {
+                navigator.serviceWorker.register("./sw.js")
+                    .then(r => console.log("SW registrado:", r.scope))
+                    .catch(e => console.warn("SW error:", e));
+            });
+        }
+    </script>
+</body>
+</html>
