@@ -1,503 +1,315 @@
-// CONFIGURACIÓN GENERAL DE LA API
+// ─── Configuración ───────────────────────────────────────────────────────────
 
 const BASE_URL = "https://api.themoviedb.org/3";
 const IMAGE_URL = "https://image.tmdb.org/t/p/w500";
-
-// Serie fija: The World at War
 const ID_SERIE = 751;
 
-// ELEMENTOS DEL DOM
+// ─── DOM ─────────────────────────────────────────────────────────────────────
 
-// Onboarding
-const onboarding = document.getElementById("onboarding");
-const apiKeyInput = document.getElementById("apiKeyInput");
-const btnValidar = document.getElementById("btnValidar");
-const estadoClave = document.getElementById("estadoClave");
+const $ = id => document.getElementById(id);
 
-// App
-const app = document.getElementById("app");
-const contenedorResultados = document.getElementById("resultados");
-const contenedorDetalles = document.getElementById("detalles");
-const contenedorMensajes = document.getElementById("mensajes");
-const hamburger = document.getElementById("hamburger");
-const navLinks = document.getElementById("navLinks");
+const onboarding = $("onboarding");
+const apiKeyInput = $("apiKeyInput");
+const btnValidar = $("btnValidar");
+const estadoClave = $("estadoClave");
+const app = $("app");
+const resultados = $("resultados");
+const detalles = $("detalles");
+const mensajes = $("mensajes");
+const hamburger = $("hamburger");
+const navLinks = $("navLinks");
 const navBtns = document.querySelectorAll(".nav-btn");
 
-// ESTADO GLOBAL
+// ─── Estado ──────────────────────────────────────────────────────────────────
 
 let API_KEY = "";
 let claveValida = false;
 let filtroActivo = "info";
 
-contenedorDetalles.style.display = "none";
+detalles.style.display = "none";
 
-// ONBOARDING – VALIDACIÓN DE API KEY
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+// Fetch + JSON en una línea
+const apiFetch = url => fetch(url).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); });
+
+// URL de la API con idioma opcional
+const apiUrl = (path, lang = "es-ES") =>
+    `${BASE_URL}${path}?api_key=${API_KEY}${lang ? `&language=${lang}` : ""}`;
+
+// Crear una tarjeta genérica
+const crearTarjeta = (clases, html) => {
+    const el = document.createElement("div");
+    el.className = "card " + clases;
+    el.innerHTML = html;
+    return el;
+};
+
+// Imagen o placeholder
+const imgOPlaceholder = (path, alt = "", clsPlaceholder = "no-image", icono = "👤") =>
+    path ? `<img src="${IMAGE_URL}${path}" alt="${alt}">` : `<div class="${clsPlaceholder}">${icono}</div>`;
+
+// Titular de sección dentro del grid
+const crearTitulo = (texto, mt = 0) => {
+    const h = document.createElement("h2");
+    h.textContent = texto;
+    h.style.gridColumn = "1 / -1";
+    if (mt) h.style.marginTop = mt + "px";
+    return h;
+};
+
+// Limpiar contenedores y mostrar mensaje de carga
+const limpiarVista = () => {
+    resultados.innerHTML = "";
+    resultados.classList.remove("traducciones-grid");
+    detalles.innerHTML = "";
+    detalles.style.display = "none";
+    mensajes.textContent = "Cargando información...";
+};
+
+// ─── Onboarding ──────────────────────────────────────────────────────────────
 
 btnValidar.addEventListener("click", validarApiKey);
-
-apiKeyInput.addEventListener("keypress", function (e) {
-    if (e.key === "Enter") validarApiKey();
-});
+apiKeyInput.addEventListener("keypress", e => e.key === "Enter" && validarApiKey());
 
 async function validarApiKey() {
-
     const clave = apiKeyInput.value.trim();
-
-    if (!clave) {
-        mostrarEstado("error", "Ingresa una API Key");
-        return;
-    }
+    if (!clave) return mostrarEstado("error", "Ingresa una API Key");
 
     mostrarEstado("loading", "Validando clave...");
-    btnValidar.disabled = true;
-    apiKeyInput.disabled = true;
+    btnValidar.disabled = apiKeyInput.disabled = true;
 
     try {
-
-        const url = `${BASE_URL}/tv/${ID_SERIE}?api_key=${clave}`;
-        const respuesta = await fetch(url);
-
-        if (respuesta.ok) {
-            API_KEY = clave;
-            claveValida = true;
-
-            mostrarEstado("ok", "¡Clave válida! Cargando...");
-
-            // Esperar un momento para que el usuario vea el mensaje de éxito
-            setTimeout(function () {
-                mostrarApp();
-            }, 900);
-
-        } else {
-            claveValida = false;
-            mostrarEstado("error", "Clave inválida o sin permisos");
-            btnValidar.disabled = false;
-            apiKeyInput.disabled = false;
-        }
-
-    } catch (error) {
-        console.error(error);
-        mostrarEstado("error", "Error de conexión");
-        btnValidar.disabled = false;
-        apiKeyInput.disabled = false;
+        await apiFetch(`${BASE_URL}/tv/${ID_SERIE}?api_key=${clave}`);
+        API_KEY = clave;
+        claveValida = true;
+        mostrarEstado("ok", "¡Clave válida! Cargando...");
+        setTimeout(mostrarApp, 900);
+    } catch {
+        mostrarEstado("error", "Clave inválida o sin permisos");
+        btnValidar.disabled = apiKeyInput.disabled = false;
     }
-
 }
 
-function mostrarEstado(tipo, texto) {
-    estadoClave.className = "api-status visible status--" + tipo;
+const mostrarEstado = (tipo, texto) => {
+    estadoClave.className = `api-status visible status--${tipo}`;
     estadoClave.innerHTML = `<span class="api-status-dot"></span>${texto}`;
-}
+};
 
-function mostrarApp() {
-    // Ocultar onboarding con fade
+const mostrarApp = () => {
     onboarding.classList.add("fade-out");
-
-    // Mostrar la app
-    app.classList.remove("app--hidden");
-    app.classList.add("app--visible");
-
-    // Cargar la sección inicial
+    app.classList.replace("app--hidden", "app--visible");
     cargarSeccion();
+    precachearEnBackground();
+};
+
+// Envía la API Key al Service Worker para pre-cachear todos los datos
+function precachearEnBackground() {
+    if (!("serviceWorker" in navigator)) return;
+    navigator.serviceWorker.ready.then(registration => {
+        registration.active?.postMessage({ type: "PRECACHE_API", apiKey: API_KEY });
+    });
 }
 
+// ─── Navbar ───────────────────────────────────────────────────────────────────
 
-// NAVBAR – LÓGICA
+const hamburgerLabel = hamburger.querySelector(".hamburger-label");
 
-hamburger.addEventListener("click", function () {
+hamburger.addEventListener("click", () => {
     hamburger.classList.toggle("open");
     navLinks.classList.toggle("open");
 });
 
-const hamburgerLabel = hamburger.querySelector(".hamburger-label");
+navBtns.forEach(btn => btn.addEventListener("click", () => {
+    navBtns.forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    filtroActivo = btn.dataset.filtro;
+    if (hamburgerLabel) hamburgerLabel.textContent = btn.textContent;
+    hamburger.classList.remove("open");
+    navLinks.classList.remove("open");
+    if (claveValida) cargarSeccion();
+}));
 
-navBtns.forEach(function (btn) {
-    btn.addEventListener("click", function () {
+// ─── Router de secciones ─────────────────────────────────────────────────────
 
-        navBtns.forEach(function (b) { b.classList.remove("active"); });
-        btn.classList.add("active");
-        filtroActivo = btn.dataset.filtro;
-
-        if (hamburgerLabel) hamburgerLabel.textContent = btn.textContent;
-
-        hamburger.classList.remove("open");
-        navLinks.classList.remove("open");
-
-        if (claveValida) cargarSeccion();
-
-    });
-});
-
-
-// CARGAR SECCIÓN ACTIVA
+const secciones = {
+    info: obtenerInformacion,
+    actores: obtenerActores,
+    temporadas: obtenerTemporadas,
+    videos: obtenerVideos,
+    imagenes: obtenerImagenes,
+    traducciones: obtenerTraducciones,
+};
 
 async function cargarSeccion() {
-
-    mostrarMensaje("Cargando información...");
-
-    contenedorResultados.innerHTML = "";
-    contenedorResultados.classList.remove("traducciones-grid");
-    contenedorDetalles.innerHTML = "";
-    contenedorDetalles.style.display = "none";
-
+    limpiarVista();
     try {
-
-        if (filtroActivo === "info") await obtenerInformacion(ID_SERIE);
-        if (filtroActivo === "actores") await obtenerActores(ID_SERIE);
-        if (filtroActivo === "temporadas") await obtenerTemporadas(ID_SERIE);
-        if (filtroActivo === "videos") await obtenerVideos(ID_SERIE);
-        if (filtroActivo === "imagenes") await obtenerImagenes(ID_SERIE);
-        if (filtroActivo === "traducciones") await obtenerTraducciones(ID_SERIE);
-
-    } catch (error) {
-        console.error(error);
-        mostrarMensaje("Error al consultar la API");
+        await secciones[filtroActivo]?.(ID_SERIE);
+    } catch (e) {
+        console.error(e);
+        mensajes.textContent = "Error al consultar la API";
     }
-
 }
 
-// INFORMACIÓN GENERAL DE LA SERIE
+// ─── Secciones ────────────────────────────────────────────────────────────────
 
 async function obtenerInformacion(id) {
+    const d = await apiFetch(apiUrl(`/tv/${id}`));
+    mensajes.textContent = "";
 
-    const url = `${BASE_URL}/tv/${id}?api_key=${API_KEY}&language=es-ES`;
-    const respuesta = await fetch(url);
-    const data = await respuesta.json();
+    const poster = imgOPlaceholder(d.poster_path, d.name, "no-image", "🎬");
 
-    mostrarMensaje("");
-
-    const poster = data.poster_path
-        ? `${IMAGE_URL}${data.poster_path}`
-        : "https://via.placeholder.com/300x450?text=No+Image";
-
-    contenedorDetalles.innerHTML = `
+    detalles.innerHTML = `
         <div class="detalles-info">
-            <div class="detalles-media">
-                <img src="${poster}" alt="${data.name}">
-            </div>
+            <div class="detalles-media">${poster}</div>
             <div class="detalles-contenido">
-                <h2>${data.name}</h2>
+                <h2>${d.name}</h2>
                 <div class="detalles-meta">
-                    <span class="chip">
-                        Primera emisión
-                        <strong>${data.first_air_date}</strong>
-                    </span>
-                    <span class="chip chip--accent">
-                        Calificación
-                        <strong>${data.vote_average}</strong>
-                    </span>
-                    <span class="chip">
-                        Temp. / Episodios
-                        <strong>${data.number_of_seasons} temporadas · ${data.number_of_episodes} episodios</strong>
-                    </span>
+                    <span class="chip">Primera emisión<strong>${d.first_air_date}</strong></span>
+                    <span class="chip chip--accent">Calificación<strong>${d.vote_average}</strong></span>
+                    <span class="chip">Temp. / Episodios<strong>${d.number_of_seasons} temporadas · ${d.number_of_episodes} episodios</strong></span>
                 </div>
-                <p class="detalles-resumen">${data.overview}</p>
+                <p class="detalles-resumen">${d.overview}</p>
             </div>
-        </div>
-    `;
+        </div>`;
 
-    contenedorDetalles.style.display = "flex";
-
+    detalles.style.display = "flex";
 }
-
-// REPARTO Y EQUIPO DE PRODUCCIÓN
 
 async function obtenerActores(id) {
+    const d = await apiFetch(apiUrl(`/tv/${id}/aggregate_credits`));
+    mensajes.textContent = "";
 
-    const url = `${BASE_URL}/tv/${id}/aggregate_credits?api_key=${API_KEY}&language=es-ES`;
-    const respuesta = await fetch(url);
-    const data = await respuesta.json();
+    const renderPersona = (p, rol) => crearTarjeta("", `
+        ${imgOPlaceholder(p.profile_path, p.name)}
+        <div class="card-body">
+            <h3>${p.name}</h3>
+            <p>${rol || "Participante"}</p>
+        </div>`);
 
-    mostrarMensaje("");
-    contenedorResultados.innerHTML = "";
+    resultados.appendChild(crearTitulo("Reparto"));
+    d.cast.forEach(a => resultados.appendChild(renderPersona(a, a.roles?.[0]?.character)));
 
-    const tituloReparto = document.createElement("h2");
-    tituloReparto.textContent = "Reparto";
-    tituloReparto.style.gridColumn = "1 / -1";
-    contenedorResultados.appendChild(tituloReparto);
-
-    data.cast.forEach(function (actor) {
-
-        const tarjeta = document.createElement("div");
-        tarjeta.classList.add("card");
-
-        const imagen = actor.profile_path
-            ? `<img src="${IMAGE_URL}${actor.profile_path}">`
-            : `<div class="no-image">👤</div>`;
-
-        tarjeta.innerHTML = `
-            ${imagen}
-            <div class="card-body">
-                <h3>${actor.name}</h3>
-                <p>${actor.roles && actor.roles[0] ? actor.roles[0].character : "Participante"}</p>
-            </div>`;
-
-        contenedorResultados.appendChild(tarjeta);
-
-    });
-
-    const tituloEquipo = document.createElement("h2");
-    tituloEquipo.textContent = "Equipo de Producción";
-    tituloEquipo.style.gridColumn = "1 / -1";
-    tituloEquipo.style.marginTop = "40px";
-    contenedorResultados.appendChild(tituloEquipo);
-
-    data.crew.forEach(function (persona) {
-
-        const tarjeta = document.createElement("div");
-        tarjeta.classList.add("card");
-
-        const imagen = persona.profile_path
-            ? `<img src="${IMAGE_URL}${persona.profile_path}">`
-            : `<div class="no-image">👤</div>`;
-
-        tarjeta.innerHTML = `
-            ${imagen}
-            <div class="card-body">
-                <h3>${persona.name}</h3>
-                <p>${persona.jobs && persona.jobs[0] ? persona.jobs[0].job : "Equipo técnico"}</p>
-            </div>`;
-
-        contenedorResultados.appendChild(tarjeta);
-
-    });
-
+    resultados.appendChild(crearTitulo("Equipo de Producción", 40));
+    d.crew.forEach(p => resultados.appendChild(renderPersona(p, p.jobs?.[0]?.job)));
 }
 
-// RECOMENDACIONES DE SERIES SIMILARES
-
 async function obtenerTemporadas(id) {
+    const d = await apiFetch(apiUrl(`/tv/${id}`));
+    const total = d.number_of_seasons || 1;
+    mensajes.textContent = "";
 
-    // 1. Obtener info general para saber cuántas temporadas hay
-    const urlSerie = `${BASE_URL}/tv/${id}?api_key=${API_KEY}&language=es-ES`;
-    const resSerie = await fetch(urlSerie);
-    const dataSerie = await resSerie.json();
+    const wrapper = document.createElement("div");
+    wrapper.className = "episodios-wrapper";
 
-    const totalTemporadas = dataSerie.number_of_seasons || 1;
-
-    mostrarMensaje("");
-    contenedorResultados.innerHTML = "";
-
-    // Contenedor donde se inyectarán los episodios
-    const episodiosWrapper = document.createElement("div");
-    episodiosWrapper.id = "episodiosWrapper";
-    episodiosWrapper.classList.add("episodios-wrapper");
-
-    if (totalTemporadas === 1) {
-
-        // 2a. Serie de una sola temporada: mostrar badge informativo
+    if (total === 1) {
         const badge = document.createElement("div");
-        badge.classList.add("temporada-unica-badge");
+        badge.className = "temporada-unica-badge";
         badge.style.gridColumn = "1 / -1";
         badge.innerHTML = `
             <span class="temporada-unica-icon">📺</span>
             <div class="temporada-unica-texto">
                 <strong>Temporada única</strong>
                 <span>Esta serie cuenta con una sola temporada</span>
-            </div>
-        `;
-        contenedorResultados.appendChild(badge);
-
+            </div>`;
+        resultados.appendChild(badge);
     } else {
-
-        // 2b. Varias temporadas: mostrar selector
-        const selectorWrapper = document.createElement("div");
-        selectorWrapper.classList.add("temporadas-selector-wrapper");
-        selectorWrapper.style.gridColumn = "1 / -1";
-
-        const label = document.createElement("label");
-        label.textContent = "Seleccionar temporada:";
-        label.classList.add("temporadas-label");
-        label.setAttribute("for", "selectorTemporada");
-
-        const selector = document.createElement("select");
-        selector.id = "selectorTemporada";
-        selector.classList.add("temporadas-select");
-
-        for (let i = 1; i <= totalTemporadas; i++) {
-            const opt = document.createElement("option");
-            opt.value = i;
-            opt.textContent = "Temporada " + i;
-            selector.appendChild(opt);
-        }
-
-        selectorWrapper.appendChild(label);
-        selectorWrapper.appendChild(selector);
-        contenedorResultados.appendChild(selectorWrapper);
-
-        selector.addEventListener("change", async function () {
-            await cargarEpisodios(id, parseInt(this.value), episodiosWrapper);
-        });
-
+        const sw = document.createElement("div");
+        sw.className = "temporadas-selector-wrapper";
+        sw.style.gridColumn = "1 / -1";
+        sw.innerHTML = `<label class="temporadas-label" for="selTemp">Seleccionar temporada:</label>
+            <select id="selTemp" class="temporadas-select">
+                ${Array.from({ length: total }, (_, i) => `<option value="${i + 1}">Temporada ${i + 1}</option>`).join("")}
+            </select>`;
+        resultados.appendChild(sw);
+        sw.querySelector("select").addEventListener("change", e => cargarEpisodios(id, +e.target.value, wrapper));
     }
 
-    contenedorResultados.appendChild(episodiosWrapper);
-
-    // 3. Cargar temporada 1 por defecto
-    await cargarEpisodios(id, 1, episodiosWrapper);
-
+    resultados.appendChild(wrapper);
+    await cargarEpisodios(id, 1, wrapper);
 }
 
-async function cargarEpisodios(id, numTemporada, wrapper) {
-
+async function cargarEpisodios(id, num, wrapper) {
     wrapper.innerHTML = "<p style='grid-column:1/-1;text-align:center;color:#64748b;padding:20px 0'>Cargando episodios...</p>";
-
-    const url = `${BASE_URL}/tv/${id}/season/${numTemporada}?api_key=${API_KEY}&language=es-ES`;
-    const respuesta = await fetch(url);
-    const data = await respuesta.json();
-
+    const d = await apiFetch(apiUrl(`/tv/${id}/season/${num}`));
     wrapper.innerHTML = "";
 
-    if (!data.episodes || data.episodes.length === 0) {
-        wrapper.innerHTML = "<p style='grid-column:1/-1;text-align:center;color:#64748b;padding:20px 0'>No hay episodios disponibles.</p>";
+    if (!d.episodes?.length) {
+        wrapper.innerHTML = "<p style='grid-column:1/-1;text-align:center;color:#64748b;padding:20px 0'>Sin episodios disponibles.</p>";
         return;
     }
 
-    data.episodes.forEach(function (ep) {
-
-        const imagen = ep.still_path
-            ? `<img src="${IMAGE_URL}${ep.still_path}" alt="${ep.name}">`
-            : `<div class="no-image" style="height:180px;font-size:48px">🎬</div>`;
-
-        const calificacion = ep.vote_average
+    d.episodes.forEach(ep => {
+        const rating = ep.vote_average
             ? `<span class="ep-rating">⭐ ${ep.vote_average.toFixed(1)}</span>`
             : `<span class="ep-rating ep-rating--na">Sin calificación</span>`;
 
-        const descripcion = ep.overview
-            ? ep.overview
-            : "Sin descripción disponible para este episodio.";
-
-        const tarjeta = document.createElement("div");
-        tarjeta.classList.add("card", "card--episodio");
-
-        tarjeta.innerHTML = `
-            ${imagen}
+        wrapper.appendChild(crearTarjeta("card--episodio", `
+            ${imgOPlaceholder(ep.still_path, ep.name, "no-image", "🎬")}
             <div class="card-body">
                 <div class="ep-header">
-                    <span class="ep-num">Ep. ${ep.episode_number}</span>
-                    ${calificacion}
+                    <span class="ep-num">Ep. ${ep.episode_number}</span>${rating}
                 </div>
                 <h3>${ep.name}</h3>
-                <p>${descripcion}</p>
-            </div>`;
-
-        wrapper.appendChild(tarjeta);
+                <p>${ep.overview || "Sin descripción disponible."}</p>
+            </div>`));
     });
 }
-
-// VIDEOS DE LA SERIE
 
 async function obtenerVideos(id) {
+    const d = await apiFetch(apiUrl(`/tv/${id}/videos`, ""));
+    mensajes.textContent = "";
 
-    const url = `${BASE_URL}/tv/${id}/videos?api_key=${API_KEY}`;
-    const respuesta = await fetch(url);
-    const data = await respuesta.json();
-
-    mostrarMensaje("");
-
-    data.results.slice(0, 5).forEach(function (video) {
-
-        if (video.site === "YouTube") {
-
-            const iframe = document.createElement("iframe");
-            iframe.width = "100%";
-            iframe.height = "300";
-            iframe.src = `https://www.youtube.com/embed/${video.key}`;
-            iframe.allowFullscreen = true;
-
-            const contenedorVideo = document.createElement("div");
-            contenedorVideo.classList.add("card");
-            contenedorVideo.appendChild(iframe);
-            contenedorResultados.appendChild(contenedorVideo);
-        }
+    d.results.filter(v => v.site === "YouTube").slice(0, 5).forEach(v => {
+        const card = document.createElement("div");
+        card.className = "card";
+        const iframe = document.createElement("iframe");
+        iframe.src = `https://www.youtube.com/embed/${v.key}`;
+        iframe.width = "100%";
+        iframe.height = "300";
+        iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
+        iframe.allowFullscreen = true;
+        card.appendChild(iframe);
+        resultados.appendChild(card);
     });
 }
-
-// IMÁGENES DE LA SERIE
 
 async function obtenerImagenes(id) {
+    const d = await apiFetch(apiUrl(`/tv/${id}/images`, ""));
+    mensajes.textContent = "";
 
-    const url = `${BASE_URL}/tv/${id}/images?api_key=${API_KEY}`;
-    const respuesta = await fetch(url);
-    const data = await respuesta.json();
-
-    mostrarMensaje("");
-
-    data.backdrops.slice(0, 10).forEach(function (imagen) {
-
-        const img = document.createElement("img");
-        img.src = `${IMAGE_URL}${imagen.file_path}`;
-        img.classList.add("grid-backdrop");
-        contenedorResultados.appendChild(img);
+    d.backdrops.slice(0, 10).forEach(img => {
+        const el = document.createElement("img");
+        el.src = IMAGE_URL + img.file_path;
+        el.className = "grid-backdrop";
+        resultados.appendChild(el);
     });
 }
-
-// TRADUCCIONES DISPONIBLES
 
 async function obtenerTraducciones(id) {
+    const d = await apiFetch(apiUrl(`/tv/${id}/translations`));
+    mensajes.textContent = "";
+    resultados.classList.add("traducciones-grid");
+    resultados.appendChild(crearTitulo("Traducciones disponibles"));
 
-    const url = `${BASE_URL}/tv/${id}/translations?api_key=${API_KEY}&language=es-ES`;
-    const respuesta = await fetch(url);
-    const data = await respuesta.json();
+    const IDIOMAS = { en: "Inglés", fr: "Francés", de: "Alemán", pt: "Portugués" };
+    const PERMITIDOS = ["en", "fr", "de", "pt"];
 
-    mostrarMensaje("");
-    contenedorResultados.innerHTML = "";
-    contenedorResultados.classList.add("traducciones-grid");
+    (d.translations || [])
+        .filter(t => t.data && (t.data.overview || t.data.name) && (
+            (t.iso_639_1 === "es" && ["MX", "ES"].includes(t.iso_3166_1)) ||
+            PERMITIDOS.includes(t.iso_639_1)
+        ))
+        .forEach(t => {
+            const etiqueta =
+                t.iso_639_1 === "es" ? `Español (${t.iso_3166_1 === "MX" ? "México" : "España"})` :
+                    IDIOMAS[t.iso_639_1] || t.english_name;
 
-    const titulo = document.createElement("h2");
-    titulo.textContent = "Traducciones disponibles";
-    titulo.style.gridColumn = "1 / -1";
-    contenedorResultados.appendChild(titulo);
-
-    const idiomasPermitidos = ["en", "fr", "de", "pt"];
-
-    const traduccionesFiltradas = (data.translations || []).filter(function (t) {
-
-        if (!t.data || (!t.data.overview && !t.data.name)) return false;
-
-        const lang = t.iso_639_1;
-        const country = t.iso_3166_1;
-
-        return (
-            (lang === "es" && country === "MX") ||
-            (lang === "es" && country === "ES") ||
-            idiomasPermitidos.indexOf(lang) !== -1
-        );
-
-    });
-
-    traduccionesFiltradas.forEach(function (traduccion) {
-
-        const tarjeta = document.createElement("div");
-        tarjeta.classList.add("card");
-
-        let etiquetaIdioma = traduccion.english_name;
-
-        if (traduccion.iso_639_1 === "es" && traduccion.iso_3166_1 === "MX") etiquetaIdioma = "Español (México)";
-        else if (traduccion.iso_639_1 === "es" && traduccion.iso_3166_1 === "ES") etiquetaIdioma = "Español (España)";
-        else if (traduccion.iso_639_1 === "en") etiquetaIdioma = "Inglés";
-        else if (traduccion.iso_639_1 === "fr") etiquetaIdioma = "Francés";
-        else if (traduccion.iso_639_1 === "de") etiquetaIdioma = "Alemán";
-        else if (traduccion.iso_639_1 === "pt") etiquetaIdioma = "Portugués";
-
-        const tituloTraducido = traduccion.data.name || traduccion.data.title || "Sin título";
-        const resumen = traduccion.data.overview || "Sin sinopsis en esta traducción.";
-
-        tarjeta.innerHTML = `
-            <div class="card-body">
-                <h3>${etiquetaIdioma}</h3>
-                <p><strong>${tituloTraducido}</strong></p>
-                <p>${resumen}</p>
-            </div>`;
-
-        contenedorResultados.appendChild(tarjeta);
-
-    });
-}
-
-
-// FUNCIÓN PARA MOSTRAR MENSAJES AL USUARIO
-
-function mostrarMensaje(texto) {
-    contenedorMensajes.textContent = texto;
+            resultados.appendChild(crearTarjeta("", `
+                <div class="card-body">
+                    <h3>${etiqueta}</h3>
+                    <p><strong>${t.data.name || t.data.title || "Sin título"}</strong></p>
+                    <p>${t.data.overview || "Sin sinopsis en esta traducción."}</p>
+                </div>`));
+        });
 }
