@@ -13,8 +13,8 @@ const SHELL = [
     "./styles/style.css",
     "./js/script.js",
     "./manifest.json",
-    "./icons/icon-192.png",
-    "./icons/icon-512.png"
+    "./assets/images/icon-192.png",
+    "./assets/images/icon-512.png"
 ];
 
 // ─── Instalación: cachear shell ───────────────────────────────────────────────
